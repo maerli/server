@@ -3,6 +3,7 @@ const app = express()
 const path = require('path')
 var cors = require('cors')
 var sqlite3 = require('sqlite3').verbose()
+var socket = require('socket.io')
 
 function getDataBase(database,cb){
 	var db = new sqlite3.Database(database+'.db')
@@ -77,6 +78,20 @@ app.get('/select/:table/:coluna/:value',(req,res)=>{
 	})
 	})
 })
+app.post('/edit/:table',(req,res)=>{
+	let table = req.params.table
+	let {coluna1,coluna2,value1,value2} = req.body
+console.log(req.body)
+	let data = getDataBase('maresia',async (db)=>{
+		db.run("UPDATE "+table+" SET "+coluna2+"=? WHERE "+coluna1+"=?",[value2,value1], (err) => {
+		if(err){
+			console.log(err)
+			res.json({err})
+		}
+		res.json({success:true})
+	})
+	})
+})
 
 app.post('/insert/:table',(req,res)=>{
 	var table = req.params.table
@@ -90,6 +105,13 @@ app.post('/insert/:table',(req,res)=>{
 	})
 })
 	
-app.listen(4000,()=>{
+const server = app.listen(4000,()=>{
 	console.log('running')
+})
+const io = socket(server)
+io.on("connection",(socket)=>{
+	console.log("connected")
+	socket.on("newPedido",data=>{
+		io.emit("reload","data")
+	})
 })
