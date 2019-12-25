@@ -4,6 +4,8 @@ const path = require('path')
 var cors = require('cors')
 var sqlite3 = require('sqlite3').verbose()
 var socket = require('socket.io')
+var desktop = require('./desktop')
+var mobile = require('./mobile')
 
 function getDataBase(database,cb){
 	var db = new sqlite3.Database(database+'.db')
@@ -15,10 +17,11 @@ function getDataBase(database,cb){
 
 app.use(cors())
 app.use(express.json())
-app.use(express.static(path.join(__dirname,'public')))
-app.use(express.static(path.join(__dirname,'build')))
 app.use(express.urlencoded({ extended: true }))
 
+
+app.use('/desktop',desktop)
+app.use('/mobile',mobile)
 
 app.get('/maerli',(req,res)=>{
 	res.send('ok')
@@ -105,7 +108,7 @@ app.post('/insert/:table',(req,res)=>{
 	})
 })
 	
-const server = app.listen(4000,()=>{
+const server = app.listen(4000,"0.0.0.0",()=>{
 	console.log('running')
 })
 const io = socket(server)
@@ -114,4 +117,8 @@ io.on("connection",(socket)=>{
 	socket.on("newPedido",data=>{
 		io.emit("reload","data")
 	})
+	socket.on("novo_pedido",(data)=>{
+		io.emit("novo_pedido",data)
+	})
 })
+
